@@ -20,7 +20,7 @@ impl Material {
         albedo: [f32; 4], 
         refractive_index: f32, 
         has_texture: bool, 
-        texture: Option<Texture>  // Pasamos la textura opcional
+        texture: Option<Texture> 
     ) -> Self {
         Material {
             diffuse,
@@ -38,31 +38,28 @@ impl Material {
             specular: 0.0,
             albedo: [0.0, 0.0, 0.0, 0.0],
             refractive_index: 1.0,
-            has_texture: false,  // Sin textura
-            texture: None,       // No hay textura
+            has_texture: false,  
+            texture: None,   
         }
     }
 
-    // Función para obtener el color difuso, ya sea de una textura o del color base del material
     pub fn get_diffuse_color(&self, u: f32, v: f32) -> Color {
         if self.has_texture {
-            // Obtener el color de la textura usando las coordenadas UV
             self.texture.as_ref().unwrap().get_color(u, v)
         } else {
-            // Retornar el color difuso base
             self.diffuse
         }
     }
 }
 
 pub struct Intersect {
-    pub point: Vector3<f32>,  // Punto de intersección
-    pub normal: Vector3<f32>, // Normal en el punto de intersección
-    pub distance: f32,        // Distancia desde el origen del rayo
-    pub is_intersecting: bool, // Indica si hay una intersección
-    pub material: Material,   // Material del objeto en el punto de intersección
-    pub u: f32,               // Coordenada U para texturas
-    pub v: f32,               // Coordenada V para texturas
+    pub point: Vector3<f32>,  
+    pub normal: Vector3<f32>, 
+    pub distance: f32,       
+    pub is_intersecting: bool, 
+    pub material: Material,   
+    pub u: f32,               
+    pub v: f32,               
 }
 
 impl Intersect {

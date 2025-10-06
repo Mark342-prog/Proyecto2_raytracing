@@ -54,7 +54,6 @@ impl Cube {
 
     fn get_diffuse_color(&self, face_index: usize, u: f32, v: f32) -> Color {
         if let Some(texture) = &self.materials[face_index].texture {
-            // Simplified texture sampling with lower precision for performance
             let tex_x = ((u * texture.width() as f32) as usize).min(texture.width() - 1);
             let tex_y = ((v * texture.height() as f32) as usize).min(texture.height() - 1);
             

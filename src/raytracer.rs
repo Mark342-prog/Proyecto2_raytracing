@@ -10,7 +10,7 @@ pub fn render(framebuffer: &mut Framebuffer, objects: &[Box<dyn RayIntersect>], 
     let width = framebuffer.width;
     let height = framebuffer.height;
     let aspect_ratio = width as f32 / height as f32;
-    let chunk_size = 32; // Larger chunks for better performance
+    let chunk_size = 32; 
 
     // Use chunked parallelization which is more efficient for raytracing
     framebuffer.buffer.par_chunks_mut(width * chunk_size).enumerate().for_each(|(chunk_idx, chunk)| {
@@ -30,7 +30,6 @@ pub fn render(framebuffer: &mut Framebuffer, objects: &[Box<dyn RayIntersect>], 
 
                 let mut pixel_color = Color::new(0, 0, 0);
 
-                // Use only the first light for ultra performance
                 if let Some(light) = lights.first() {
                     let light_contrib = cast_ray(&camera.eye, &ray_direction, objects, light, 0);
                     pixel_color = light_contrib;
@@ -49,21 +48,19 @@ fn cast_shadow(
     light: &Light,
     objects: &[Box<dyn RayIntersect>],
 ) -> f32 {
-    // Ultra-fast shadow approximation - just check the first few objects
     let light_dir = (light.position - intersect.point).normalize();
     let distance_to_light = (light.position - intersect.point).magnitude();
     let shadow_ray_origin = intersect.point + intersect.normal * 1e-3;
 
-    // Only check first 10 objects for shadow to improve performance
     let max_objects = objects.len().min(10);
     for object in &objects[..max_objects] {
         let shadow_intersect = object.ray_intersect(&shadow_ray_origin, &light_dir);
         if shadow_intersect.is_intersecting && shadow_intersect.distance < distance_to_light {
-            return 0.8; // Fixed shadow intensity for performance
+            return 0.8; 
         }
     }
 
-    0.0 // No shadow
+    0.0 
 }
 
 fn refract(incident: &Vector3<f32>, normal: &Vector3<f32>, eta_t: f32) -> Vector3<f32> {
@@ -72,12 +69,10 @@ fn refract(incident: &Vector3<f32>, normal: &Vector3<f32>, eta_t: f32) -> Vector
     let (n_cosi, eta, n_normal);
 
     if cosi < 0.0 {
-        // El rayo está entrando en el objeto
         n_cosi = -cosi;
         eta = 1.0 / eta_t;
         n_normal = -normal;
     } else {
-        // El rayo está saliendo del objeto
         n_cosi = cosi;
         eta = eta_t;
         n_normal = *normal;
@@ -86,7 +81,6 @@ fn refract(incident: &Vector3<f32>, normal: &Vector3<f32>, eta_t: f32) -> Vector
     let k = 1.0 - eta * eta * (1.0 - n_cosi * n_cosi);
 
     if k < 0.0 {
-        // Reflexión total interna
         reflect(incident, &n_normal)
     } else {
         eta * incident + (eta * n_cosi - k.sqrt()) * n_normal
@@ -100,8 +94,8 @@ pub fn cast_ray(
     light: &Light,
     depth: u32,
 ) -> Color {
-    if depth > 1 {  // Reduced to 1 for maximum performance - no reflections/refractions
-        return Color::new(0, 0, 0);  // Color de fondo si alcanzamos la profundidad máxima
+    if depth > 1 {
+        return Color::new(0, 0, 0);  
     }
 
     let mut closest_intersect = Intersect::empty();
@@ -116,7 +110,7 @@ pub fn cast_ray(
     }
 
     if !closest_intersect.is_intersecting {
-        return Color::new(4, 12, 36);  // Color de fondo
+        return Color::new(4, 12, 36);  
     }
 
     let diffuse_color = closest_intersect.material.get_diffuse_color(closest_intersect.u, closest_intersect.v);
@@ -133,8 +127,6 @@ pub fn cast_ray(
     let specular_intensity = view_dir.dot(&reflect_dir).max(0.0).powf(closest_intersect.material.specular);
     let specular = light.color.scale(closest_intersect.material.albedo[1] * specular_intensity * light_intensity);
 
-    // Disable expensive reflection and refraction calculations for maximum performance
-    // Just return the basic diffuse + specular lighting
     diffuse + specular
 }
 

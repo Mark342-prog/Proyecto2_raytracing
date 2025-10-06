@@ -14,7 +14,6 @@ impl Framebuffer {
         }
     }
 
-    // Método para hacer upscale bilineal
     pub fn upscale_bilineal(&self, new_width: usize, new_height: usize) -> Framebuffer {
         let mut high_res_buffer = vec![0; new_width * new_height];
 
@@ -47,7 +46,6 @@ impl Framebuffer {
         }
     }
 
-    // Interpolación bilineal para los colores
     fn bilinear_interpolation(c11: u32, c12: u32, c21: u32, c22: u32, weight_x: f32, weight_y: f32) -> u32 {
         let r11 = ((c11 >> 16) & 0xFF) as f32;
         let g11 = ((c11 >> 8) & 0xFF) as f32;
@@ -83,7 +81,6 @@ impl Framebuffer {
         (r << 16) | (g << 8) | b
     }
 
-    // Obtener el buffer
     pub fn get_buffer(&self) -> &[u32] {
         &self.buffer
     }

@@ -29,13 +29,11 @@ fn main() {
     let width = 800;
     let height = 600;
 
-    // Initialize multiple resolution framebuffers for adaptive scaling
     let mut framebuffer_high = Framebuffer::new(width, height);
     let mut framebuffer_medium = Framebuffer::new(width / 2, height / 2);
     let mut framebuffer_low = Framebuffer::new(width / 6, height / 6); // Ultra low for movement
     let mut framebuffer_ultra_low = Framebuffer::new(width / 8, height / 8); // Emergency performance mode
 
-    // Inicializamos la ventana con minifb
     let mut window = Window::new(
         "Minecraft Diorama Raytracing",
         width,
@@ -46,7 +44,6 @@ fn main() {
         panic!("{}", e);
     });
 
-    // Definimos las texturas a utilizar
     let agua_texture = Texture::load_from_file("assets/agua.jpg");
     let tierra_texture = Texture::load_from_file("assets/tierra.jpeg");
     let tierra_grama_texture = Texture::load_from_file("assets/tierra2.png");
@@ -59,11 +56,10 @@ fn main() {
     //let textura_solida = Color::new(255, 0, 0);
     //let material_prueba = Material::new(textura_solida, 32.0, [1.0, 0.1, 0.0, 0.0], 1.0, false, None);
 
-    // Definimos la cámara
     let mut camera = Camera::new(
-        Vector3::new(0.0, 5.0, -10.0),  // Posición de la cámara
-        Vector3::new(0.0, 0.0, 0.0),  // Punto que la cámara está mirando (centro de la escena)
-        Vector3::new(0.0, 1.0, 0.0),  // Vector "up"
+        Vector3::new(0.0, 5.0, -10.0),  
+        Vector3::new(0.0, 0.0, 0.0), 
+        Vector3::new(0.0, 1.0, 0.0),  
     );
 
     // Definimos la luz
@@ -82,22 +78,21 @@ fn main() {
     let hoja = Material::new(Color::new(255, 255, 255), 32.0, [1.0, 0.1, 0.0, 0.0], 1.0, true, Some(hoja_texture.clone()));
     let arena = Material::new(Color::new(255, 255, 255), 32.0, [1.0, 0.1, 0.0, 0.0], 1.0, true, Some(arena_texture.clone()));
 
-    // Creamos los cubos en la escena
+
     let mut objects: Vec<Box<dyn RayIntersect>> = Vec::new();
 
     // Base de 8x8 cubos
     let grid_size = 8;
     let cube_size = 1.0;
     
-    // Recorrer en ambos ejes X y Z para crear una cuadrícula
     for z in 0..grid_size {
         for x in 0..grid_size {
             let x_pos = x as f32 * cube_size - (grid_size as f32 / 2.0) * cube_size;
             let z_pos = z as f32 * cube_size - (grid_size as f32 / 2.0) * cube_size;
             
             objects.push(Box::new(Cube {
-                center: Vector3::new(x_pos, 0.0, z_pos),  // Posición del cubo
-                size: cube_size,                         // Tamaño del cubo
+                center: Vector3::new(x_pos, 0.0, z_pos),  
+                size: cube_size,                        
                 materials: [
                     tierra.clone(),  // Derecha
                     tierra.clone(),  // Izquierda
@@ -754,7 +749,6 @@ fn main() {
         ],
     }));
 
-    // Ejemplo de un material transparente (por ejemplo, vidrio)
     let glass = Material::new(Color::new(255, 255, 255), 125.0, [0.0, 0.5, 0.1, 0.8], 1.5, false, None); // Vidrio, 80% transparente, índice de refracción 1.5
     
     let mut needs_render = true;
@@ -770,11 +764,9 @@ fn main() {
     let scaled_initial = upscale_framebuffer(framebuffer_medium.get_buffer(), framebuffer_medium.width, framebuffer_medium.height, width, height);
     window.update_with_buffer(&scaled_initial, width, height).unwrap();
     
-    // Bucle principal para manejar la entrada del teclado y actualizar la cámara
     while window.is_open() && !window.is_key_down(Key::Escape) {
         camera_moved = false;
 
-        // Handle camera movement with performance-optimized movement
         if window.is_key_down(Key::W) {
             camera.mover_enfrente(0.4);
             camera_moved = true;
@@ -792,7 +784,6 @@ fn main() {
             camera_moved = true;
         }
 
-        // Handle camera rotation
         if window.is_key_down(Key::Up) {
             camera.orbit(0.0, -0.1);
             camera_moved = true;
@@ -810,7 +801,6 @@ fn main() {
             camera_moved = true;
         }
 
-        // Track movement for adaptive quality
         if camera_moved {
             movement_frames += 1;
         } else {
@@ -821,7 +811,6 @@ fn main() {
         let frame_time = last_frame_time.elapsed();
         let target_fps = Duration::from_millis(33); // Target ~30 FPS
         
-        // Simplified animation - only when not moving for better performance
         let should_animate = !camera_moved && last_animation_update.elapsed() >= Duration::from_millis(200);
         if should_animate {
             let elapsed_time = animation_start.elapsed().as_secs_f32();
@@ -836,28 +825,22 @@ fn main() {
             last_animation_update = Instant::now();
         }
 
-        // Adaptive quality rendering system
         if camera_moved || should_animate {
             if camera_moved {
-                // Choose resolution based on frame time performance and movement intensity
                 if frame_time > Duration::from_millis(50) || movement_frames > 10 {
-                    // Emergency ultra-low quality for very slow performance
                     render(&mut framebuffer_ultra_low, &objects, &camera, &lights);
                     let scaled_framebuffer = upscale_framebuffer(framebuffer_ultra_low.get_buffer(), framebuffer_ultra_low.width, framebuffer_ultra_low.height, width, height);
                     window.update_with_buffer(&scaled_framebuffer, width, height).unwrap();
                 } else if frame_time > Duration::from_millis(25) {
-                    // Low quality for moderate performance issues
                     render(&mut framebuffer_low, &objects, &camera, &lights);
                     let scaled_framebuffer = upscale_framebuffer(framebuffer_low.get_buffer(), framebuffer_low.width, framebuffer_low.height, width, height);
                     window.update_with_buffer(&scaled_framebuffer, width, height).unwrap();
                 } else {
-                    // Medium quality for good performance
                     render(&mut framebuffer_medium, &objects, &camera, &lights);
                     let scaled_framebuffer = upscale_framebuffer(framebuffer_medium.get_buffer(), framebuffer_medium.width, framebuffer_medium.height, width, height);
                     window.update_with_buffer(&scaled_framebuffer, width, height).unwrap();
                 }
             } else {
-                // High quality when stationary (every 3rd frame to maintain responsiveness)
                 if frame_count % 3 == 0 {
                     render(&mut framebuffer_high, &objects, &camera, &lights);
                     window.update_with_buffer(framebuffer_high.get_buffer(), width, height).unwrap();
@@ -867,11 +850,10 @@ fn main() {
         
         last_frame_time = Instant::now();
 
-        // Aggressive CPU usage optimization
         if !camera_moved {
-            std::thread::sleep(Duration::from_millis(100)); // Much longer delay when stationary
+            std::thread::sleep(Duration::from_millis(100)); 
         } else {
-            std::thread::sleep(Duration::from_millis(8)); // Shorter delay during movement
+            std::thread::sleep(Duration::from_millis(8)); 
         }
     }
 }
